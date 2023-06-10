@@ -10,14 +10,16 @@ import {
   ScrollView,
   Button,
 } from "react-native";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 
+import { PlantContext } from "./App";
 export default function AddScreen(props) {
+  const { userPlants, setUserPlants } = useContext(PlantContext);
   const [waterDays, setWaterDays] = useState({
     M: false,
     T: false,
     W: false,
-    Th:false,
+    Th: false,
     F: false,
     Sa: false,
     S: false,
@@ -26,34 +28,74 @@ export default function AddScreen(props) {
   const [light, setLight] = useState(0);
   const [humidity, setHumidity] = useState(0);
   const [temp, setTemp] = useState(0);
-  const [updatedPlantObj, setUpdatedPlantObj] = useState({})
-  const [isClicked, setIsClicked] = useState(false)
+  const [updatedPlantObj, setUpdatedPlantObj] = useState({});
+  const [isClicked, setIsClicked] = useState(false);
+  const [nameError, setNameError] = useState('')
+  const [waterError, setWaterError] = useState('')
+  const [showErr,setShowErr] = useState(false)
   const days = Object.keys(waterDays);
+  const firstUpdate = useRef(true);
   useEffect(() => {
     console.log("water days:", waterDays);
   }, [waterDays]);
+  useEffect(() => {
+    console.log('Name: ',props.route.params.name)
+    props.route.params.name?setName(props.route.params.name):setName(props.route.params.altName);
+  }, []);
+  useEffect(() => {
+    if (!firstUpdate.current) {
+      const tempObj = {
+        ["plant" + (Object.keys(userPlants).length + 1)]: {
+          name: name,
+          light: light,
+          temp: temp,
+          humidity: humidity,
+          schedule: waterDays,
+          image: "https://cdn-icons-png.flaticon.com/512/6284/6284623.png",
+        },
+      };
+      setUpdatedPlantObj(tempObj);
+    }
+    firstUpdate.current = false;
+    console.log("firstUpdate", firstUpdate);
+    console.log("Plants: ", userPlants);
+  }, [isClicked]);
   useEffect(()=>{
-    const tempObj = {
-      ['plant'+(Object.keys(props.route.params.userPlants).length+1)]:{
-        name:name,
-        light:light,
-        temp:temp,
-        humidity:humidity,
-        schedule:waterDays,
-        image:'https://cdn-icons-png.flaticon.com/512/6284/6284623.png',
+    checkName();
+    checkWater();
+    setShowErr(false)
+  },[name,waterDays])
+  useEffect(()=>{
+    console.log('Err:',nameError)
+  },[])
+  useEffect(() => {
+    setUserPlants((prev) => {
+      return { ...prev, ...updatedPlantObj };
+    });
+  }, [updatedPlantObj]);
+function checkName(){
+  if(name.trim()==''){
+    setNameError('Name cannot be empty')
+  }
+  else{
+    setNameError('none')
+  }
+}
+function checkWater(){
+  const keys = Object.keys(waterDays);
+  let isSet = false;
+  keys.map((value,index)=>{
+    if(!isSet){
+      if(waterDays[value]==true){
+        setWaterError('none')
+        isSet = true
+      }
+      else if(waterDays[value]==false){
+        setWaterError('Choose at least a day for watering')
       }
     }
-    setUpdatedPlantObj(tempObj)
-   
-    console.log('Plants: ',props.route.params.userPlants)
-  },[isClicked])
-  useEffect(()=>{
-
-    props.route.params.setUserPlants(prev=>{
-      return({...prev,...updatedPlantObj})
-    });
-    
-  },[updatedPlantObj])
+  })
+}
   const InputBox = (props) => {
     return (
       <View style={styles.inputNumContainer}>
@@ -63,7 +105,9 @@ export default function AddScreen(props) {
           placeholderTextColor="#606060"
           keyboardType="number-pad"
           editable={false}
-          value={props.variable!==0?String(props.variable + props.unit):'-'}
+          value={
+            props.variable !== 0 ? String(props.variable + props.unit) : "-"
+          }
         />
         <View style={styles.arrowContainer}>
           <TouchableOpacity
@@ -94,30 +138,53 @@ export default function AddScreen(props) {
           <View style={styles.lineBreak}></View>
           <View style={styles.inputContainer}>
             <Text style={styles.inputTitle}>Name</Text>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Plant name"
-              placeholderTextColor="#606060"
-              onChangeText={(value) => {
-                setName(value);
-              }}
-              value={name}
-            />
-            <Text style={styles.inputTitle}>Light % - <Text style={styles.optionalText}>Optional</Text></Text>
+            <View style={styles.inputNumContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="Plant name"
+                placeholderTextColor="#606060"
+                onChangeText={(value) => {
+                  setName(value);
+                }}
+                value={name}
+              />
+              <TouchableOpacity onPress={()=>{
+                if(props.route.params.name){
+                setName(props.route.params.name==name?props.route.params.altName:props.route.params.name)
+                }
+              }}>
+                <Image
+                  source={require("./assets/images/swap.png")}
+                  style={styles.swapIcon}
+                />
+              </TouchableOpacity>
+            </View>
+            <Text style={[styles.errorText,{display:showErr&&nameError!=='none'?'flex':'none'}]}>{nameError}</Text>
+            <Text style={styles.inputTitle}>
+              Light % - <Text style={styles.optionalText}>Optional</Text>
+            </Text>
             <InputBox
               variable={light}
               setVar={setLight}
               key={"light"}
               unit={"%"}
             />
-            <Text style={styles.inputTitle}>Humidity % - <Text style={styles.optionalText}>Optional</Text></Text>
+            <Text style={styles.inputTitle}>
+              Humidity % - <Text style={styles.optionalText}>Optional</Text>
+            </Text>
             <InputBox
               variable={humidity}
               setVar={setHumidity}
               key={"humidity"}
               unit={"%"}
             />
-            <Text style={styles.inputTitle}>Temperature % - <Text style={styles.optionalText}>Optional<Text/></Text></Text>
+            <Text style={styles.inputTitle}>
+              Temperature °C -{" "}
+              <Text style={styles.optionalText}>
+                Optional
+                <Text />
+              </Text>
+            </Text>
             <InputBox
               variable={temp}
               setVar={setTemp}
@@ -159,14 +226,17 @@ export default function AddScreen(props) {
               </ScrollView>
             </View>
           </View>
+          <Text style={[styles.errorText,{display:showErr&&waterError!=='none'?'flex':'none'}]}>{waterError}</Text>
           <TouchableOpacity
             style={styles.addButton}
             onPress={() => {
-              const plantsUpdated = { ...props.route.params.userPlants };
-              setIsClicked(!isClicked)
-              console.log(updatedPlantObj)
-             
-              props.navigation.navigate('Home')
+              if(nameError=='none'&&waterError=='none'){
+                const plantsUpdated = { ...userPlants };
+                setIsClicked(!isClicked);
+                console.log(updatedPlantObj);
+                props.navigation.navigate("Home");
+              }
+              setShowErr(true)
             }}
           >
             <Text style={styles.buttonText}>Add Plant</Text>
@@ -287,6 +357,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: "#1d1d1d",
+    alignItems: "center",
   },
   arrowContainer: {
     height: "100%",
@@ -307,8 +378,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#1a1a1a",
     borderRadius: 10,
   },
-  optionalText:{
-    fontSize:13,
-    fontStyle:'italic'
+  optionalText: {
+    fontSize: 13,
+    fontStyle: "italic",
   },
+  swapIcon: {
+    width: 35,
+    height: 35,
+    marginRight: 15,
+  },
+  errorText:{
+    color:'#b74a58'
+  }
 });

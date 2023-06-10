@@ -8,23 +8,24 @@ import {
   TouchableOpacity,
   ScrollView,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
+import { PlantContext } from "./App";
 import { createStackNavigator } from "@react-navigation/stack";
 const Stack = createStackNavigator();
 export default function Navigator(props) {
   return (
-    <Stack.Navigator>
-      <Stack.Screen name="Home" component={HomeScreen}></Stack.Screen>
-      <Stack.Screen name="Plant" component={PlantScreen}></Stack.Screen>
-    </Stack.Navigator>
+      <Stack.Navigator >
+        <Stack.Screen name="HomeScreen" component={HomeScreen}></Stack.Screen>
+        <Stack.Screen name="PlantScreen" component={PlantScreen}></Stack.Screen>
+      </Stack.Navigator>
   );
 }
 
 function HomeScreen(props) {
+  const {userPlants, setUserPlants} = useContext(PlantContext)
+
   const colourScheme = ["#c9d3ee", "#f7d4da", "#e9dbc2", "#caf4ed"];
-  const [userPlants, setUserPlants] = useState({
-    
-  });
+  
 
   const plantsArr = Object.keys(userPlants);
 
@@ -34,10 +35,7 @@ function HomeScreen(props) {
       <TouchableOpacity
         style={styles.addButton}
         onPress={() =>
-          props.navigation.navigate("Add", {
-            setUserPlants: setUserPlants,
-            userPlants: userPlants,
-          })
+          props.navigation.navigate("Add")
         }
       >
         <Text style={styles.buttonText}>+</Text>
@@ -46,7 +44,8 @@ function HomeScreen(props) {
       <Text style={styles.infoText}>You have {plantsArr.length} plants</Text>
       <ScrollView>
         <View style={styles.plantMainContainer}>
-          {plantsArr.map((value, index) => {
+          {plantsArr.length!==0?(
+          plantsArr.map((value, index) => {
             return (
               <TouchableOpacity
                 style={[
@@ -56,7 +55,7 @@ function HomeScreen(props) {
                   },
                 ]}
                 onPress={() => {
-                  props.navigation.navigate("PlantScreen");
+                  props.navigation.navigate("Plant");
                 }}
               >
                 <Text style={styles.plantTitle}>
@@ -105,8 +104,12 @@ function HomeScreen(props) {
                   </View>
                   </View>
               </TouchableOpacity>
-            );
-          })}
+            )
+          })):
+          <View style={{width:300,height:300}}>
+            <Image source={require('./assets/images/plant-gif.gif')} style={styles.imagePlant}/>
+          </View>
+            }
         </View>
       </ScrollView>
       <StatusBar style="auto" />
@@ -157,10 +160,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 5,
+    justifyContent:'center'
   },
   plantImage: {
     width: "70%",
-    flex: 0.9,
+    aspectRatio:1,
   },
   plantTitle: {
     fontWeight: 600,
@@ -174,8 +178,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     position: "absolute",
-    bottom: 10,
-    right: 10,
+    bottom: 30,
+    right: 15,
     zIndex: 100,
   },
   buttonText: {
@@ -202,5 +206,9 @@ const styles = StyleSheet.create({
   greyText:{
     color:'#646464',
     marginTop:2
+  },
+  imagePlant:{
+    flex:1,
+    aspectRatio:1,
   }
 });
