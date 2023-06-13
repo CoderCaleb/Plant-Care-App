@@ -6,9 +6,13 @@ import {
   StyleSheet,
   ScrollView,
 } from "react-native";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
+import { remove, ref, getDatabase } from "firebase/database";
+import { getAuth } from "firebase/auth";
+import { PlantContext } from "./LoggedIn";
 //#f5d4d7, #c5ceed
 export default function PlantScreen({ navigation, route }) {
+  const { setFlagToast, flagToast } = useContext(PlantContext);
   const days = ["M", "T", "W", "Th", "F", "Sa", "S"];
   const today = new Date();
   const dayOfWeek = today.getDay();
@@ -35,66 +39,123 @@ export default function PlantScreen({ navigation, route }) {
       <ScrollView>
         <View style={styles.titleContainer}>
           <Text style={styles.titleText}>{route.params.name}</Text>
-          <TouchableOpacity onPress={()=>{
-            navigation.navigate('EditScreen',{
-              name: route.params.name,
-              light: route.params.light,
-              temp: route.params.temp,
-              humidity: route.params.humidity,
-              water: route.params.water,
-              altName: route.params.name,
-              type:'edit',
-              plantKey: route.params.plantKey
-            })
-          }}>
-            <Image source={require('./assets/images/editing.png')} style={styles.editIcon}/>
-          </TouchableOpacity>
-        </View>
-        <View style={{flexDirection:'row',gap:10,justifyContent:'center'}}>
-        <View style={[styles.infoContainer,{height:250,justifyContent:'center',alignItems:'center'}]}>
-          <View style={styles.iconTextContainer}>
-            <View style={styles.imageContainer}>
+          <View style={styles.iconContainer}>
+            <TouchableOpacity
+              onPress={() => {
+                navigation.navigate("EditScreen", {
+                  name: route.params.name,
+                  light: route.params.light,
+                  temp: route.params.temp,
+                  humidity: route.params.humidity,
+                  water: route.params.water,
+                  altName: route.params.name,
+                  type: "edit",
+                  plantKey: route.params.plantKey,
+                });
+              }}
+            >
               <Image
-                source={require("./assets/images/sun-icon-white.png")}
-                style={styles.iconImage}
+                source={require("./assets/images/editing.png")}
+                style={styles.editIcon}
               />
-            </View>
-            <Text style={styles.infoTitle}>Light</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                const auth = getAuth();
+                const dataRef = ref(
+                  getDatabase(),
+                  `/users/${auth.currentUser.uid}/plants/${route.params.plantKey}`
+                );
+                remove(dataRef)
+                  .then((value) => {
+                    navigation.navigate("HomeScreen");
+                    console.log("PLANT DELETED");
+                    setFlagToast({
+                      toastInfo: {
+                        type: "success",
+                        text1: "Plant deleted",
+                        text2:
+                          "Plant successfully removed from your collection! 🗑️🌿",
+                      },
+                      flag: !flagToast,
+                    });
+                  })
+                  .catch((err) => {
+                    console.log(err);
+                    setFlagToast({
+                      toastInfo: {
+                        type: 'error',
+text1: 'Deletion failed',
+text2: 'Failed to delete the plant. Please try again later. 🚫'
+                      },
+                      flag: !flagToast,
+                    })
+                  });
+              }}
+            >
+              <Image
+                source={require("./assets/images/delete.png")}
+                style={styles.deleteIcon}
+              />
+            </TouchableOpacity>
           </View>
-          <Text style={styles.infoText}>
-            {checkNumber(route.params.light, "%")}
-          </Text>
         </View>
-        <View>
-          <View style={[styles.infoContainer, { backgroundColor: "#f5d4d7" }]}>
+        <View
+          style={{ flexDirection: "row", gap: 10, justifyContent: "center" }}
+        >
+          <View
+            style={[
+              styles.infoContainer,
+              { height: 250, justifyContent: "center", alignItems: "center" },
+            ]}
+          >
             <View style={styles.iconTextContainer}>
               <View style={styles.imageContainer}>
                 <Image
-                  source={require("./assets/images/temp-icon-white.png")}
+                  source={require("./assets/images/sun-icon-white.png")}
                   style={styles.iconImage}
                 />
               </View>
-              <Text style={styles.infoTitle}>Temp</Text>
+              <Text style={styles.infoTitle}>Light</Text>
             </View>
             <Text style={styles.infoText}>
-              {checkNumber(route.params.temp, "°C")}
+              {checkNumber(route.params.light, "%")}
             </Text>
           </View>
-          <View style={[styles.infoContainer, { backgroundColor: "#c5ceed" }]}>
-            <View style={styles.iconTextContainer}>
-              <View style={styles.imageContainer}>
-                <Image
-                  source={require("./assets/images/droplet-icon-white.png")}
-                  style={styles.iconImage}
-                />
+          <View>
+            <View
+              style={[styles.infoContainer, { backgroundColor: "#f5d4d7" }]}
+            >
+              <View style={styles.iconTextContainer}>
+                <View style={styles.imageContainer}>
+                  <Image
+                    source={require("./assets/images/temp-icon-white.png")}
+                    style={styles.iconImage}
+                  />
+                </View>
+                <Text style={styles.infoTitle}>Temp</Text>
               </View>
-              <Text style={styles.infoTitle}>Humidity</Text>
+              <Text style={styles.infoText}>
+                {checkNumber(route.params.temp, "°C")}
+              </Text>
             </View>
-            <Text style={styles.infoText}>
-              {checkNumber(route.params.humidity, "%")}
-            </Text>
+            <View
+              style={[styles.infoContainer, { backgroundColor: "#c5ceed" }]}
+            >
+              <View style={styles.iconTextContainer}>
+                <View style={styles.imageContainer}>
+                  <Image
+                    source={require("./assets/images/droplet-icon-white.png")}
+                    style={styles.iconImage}
+                  />
+                </View>
+                <Text style={styles.infoTitle}>Humidity</Text>
+              </View>
+              <Text style={styles.infoText}>
+                {checkNumber(route.params.humidity, "%")}
+              </Text>
+            </View>
           </View>
-        </View>
         </View>
         <View style={styles.waterContainer}>
           <View style={{ paddingHorizontal: 20, paddingVertical: 10 }}>
@@ -111,7 +172,6 @@ export default function PlantScreen({ navigation, route }) {
                         ]}
                       ></View>
                       <TouchableOpacity
-                        
                         style={[
                           styles.scheduleContainer,
                           {
@@ -123,10 +183,14 @@ export default function PlantScreen({ navigation, route }) {
                       >
                         <Text style={styles.dayText}>{index + 1}</Text>
                         <View style={styles.iconContainerWater}>
-                          {route.params.water[value]?
-                          <Image source={require('./assets/images/droplet-icon.png')} style={styles.iconImage}/>
-                          :<Text style={styles.dayText}>{value}</Text>
-                }
+                          {route.params.water[value] ? (
+                            <Image
+                              source={require("./assets/images/droplet-icon.png")}
+                              style={styles.iconImage}
+                            />
+                          ) : (
+                            <Text style={styles.dayText}>{value}</Text>
+                          )}
                         </View>
                       </TouchableOpacity>
                     </View>
@@ -150,7 +214,7 @@ const styles = StyleSheet.create({
     fontSize: 30,
     fontWeight: 600,
     color: "white",
-    paddingLeft:20,
+    paddingLeft: 20,
   },
   infoContainer: {
     width: 160,
@@ -193,7 +257,7 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     borderRadius: 10,
     marginTop: 15,
-    alignSelf:'center'
+    alignSelf: "center",
   },
   waterInnerContainer: {
     width: "80%",
@@ -236,16 +300,24 @@ const styles = StyleSheet.create({
     backgroundColor: "black",
     opacity: 0,
   },
-  titleContainer:{
-    flexDirection:'row',
-    alignItems:'center',
+  titleContainer: {
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: 40,
     marginBottom: 20,
-    justifyContent:'space-between'
+    justifyContent: "space-between",
   },
-  editIcon:{
-    width:30,
-    height:30,
-    marginRight:20
-  }
+  editIcon: {
+    width: 30,
+    height: 30,
+    marginRight: 10,
+  },
+  deleteIcon: {
+    width: 32,
+    height: 32,
+  },
+  iconContainer: {
+    flexDirection: "row",
+    marginRight: 20,
+  },
 });

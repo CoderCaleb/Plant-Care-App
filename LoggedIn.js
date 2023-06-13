@@ -20,13 +20,16 @@ export const PlantContext = createContext({});
 
 export default function LoggedIn() {
   const [userPlants, setUserPlants] = useState({});
-  
+  const [flagToast, setFlagToast] = useState(false)
   useEffect(()=>{
     const auth = getAuth()
     onValue(ref(getDatabase(),`/users/${auth.currentUser.uid}/plants`),(snapshot)=>{
         if(snapshot.exists()){
             const data = snapshot.val()
             setUserPlants(data)
+        }
+        else{
+          setUserPlants({})
         }
     })
     
@@ -42,7 +45,7 @@ export default function LoggedIn() {
   },[userPlants])
   */
   return (
-    <PlantContext.Provider value={{ userPlants, setUserPlants }}>
+    <PlantContext.Provider value={{ userPlants, setUserPlants, flagToast,setFlagToast }}>
         <Tab.Navigator
           screenOptions={{
             tabBarShowLabel:false,

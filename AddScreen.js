@@ -15,7 +15,7 @@ import { update, getDatabase, ref, set } from "firebase/database";
 import { getAuth } from "firebase/auth";
 import { PlantContext } from "./LoggedIn";
 export default function AddScreen(props) {
-  const { userPlants, setUserPlants } = useContext(PlantContext);
+  const { userPlants, setUserPlants, setFlagToast, flagToast } = useContext(PlantContext);
   const waterSchedule = props.route.params.water;
   const screenType = props.route.params.type;
   const [waterDays, setWaterDays] = useState(
@@ -66,13 +66,28 @@ export default function AddScreen(props) {
       ? setName(props.route.params.name)
       : setName(props.route.params.altName);
   }, []);
+  function generatePlantID() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    
+    const length = 8;
+    
+    let uid = '';
+    
+    for (let i = 0; i < length; i++) {
+      const randomIndex = Math.floor(Math.random() * chars.length);
+      
+      uid += chars.charAt(randomIndex);
+    }
+    
+    return uid;
+  }
   useEffect(() => {
     const auth = getAuth();
 
     if (!firstUpdate.current) {
       if (screenType !== "edit") {
         const tempObj = {
-          ["plant" + (Object.keys(userPlants).length + 1)]: {
+          [generatePlantID()]: {
             name: name,
             light: light,
             temp: temp,
@@ -87,6 +102,18 @@ export default function AddScreen(props) {
         );
         update(userRef, tempObj).then((value) => {
           console.log("PLANT ADDED");
+          setFlagToast({toastInfo:{
+            type:'success',
+            text1: 'Plant added',
+            text2: 'Plant successfully added to your collection! 🌿'
+          },flag:!flagToast})
+        })
+        .catch(()=>{
+          setFlagToast({toastInfo:{
+            type:'error',
+            text1: 'Add failed',
+            text2: 'Failed to add plant to your collection. Please try again. ❌'
+            },flag:!flagToast})
         });
         setUpdatedPlantObj(tempObj);
       } else {
@@ -105,9 +132,19 @@ export default function AddScreen(props) {
         set(userRef, tempObj)
           .then((value) => {
             console.log("PLANT UPDATED");
+            setFlagToast({toastInfo:{
+              type:'success',
+              text1: 'Plant updated',
+              text2: 'Plant information successfully updated! 🌱'
+            },flag:!flagToast})
           })
           .catch((err) => {
             console.log(err);
+            setFlagToast({toastInfo:{
+              type: 'error',
+text1: 'Update failed',
+text2: 'Failed to update plant information. Please try again later. 🚫'
+            },flag:!flagToast})
           });
         setUpdatedPlantObj(tempObj);
       }
@@ -126,24 +163,7 @@ export default function AddScreen(props) {
     console.log("Err:", nameError);
     console.log("Key", props.route.params.plantKey);
   }, []);
-  /*
-  useEffect(() => {
-    if(!firstUpdate.current){
-      if (screenType !== "edit") {
-        setUserPlants((prev) => {
-          return { ...prev, ...updatedPlantObj };
-        });
-      } else {
-        setUserPlants((prev) => {
-          const copyObj = { ...userPlants };
-          copyObj[props.route.params.plantKey] = updatedPlantObj;
-          console.log("Copy Obj:", copyObj);
-          return copyObj;
-        });
-      }
-    }
-  }, [updatedPlantObj]);
-  */
+
   function checkName() {
     if (name.trim() == "") {
       setNameError("Name cannot be empty");

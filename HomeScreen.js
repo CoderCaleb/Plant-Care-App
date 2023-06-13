@@ -8,12 +8,14 @@ import {
   TouchableOpacity,
   ScrollView,
 } from "react-native";
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext, useRef } from "react";
 import { PlantContext } from "./LoggedIn";
 import { createStackNavigator } from "@react-navigation/stack";
 import { getDatabase, ref, set, get, onValue, update } from "firebase/database";
 import AddScreen from "./AddScreen";
 import PlantScreen from "./PlantScreen";
+import { getAuth } from "firebase/auth";
+import Toast from 'react-native-toast-message'
 const Stack = createStackNavigator();
 export default function Navigator(props) {
   useEffect(()=>{
@@ -29,12 +31,17 @@ export default function Navigator(props) {
 }
 
 function HomeScreen(props) {
-  const { userPlants, setUserPlants } = useContext(PlantContext);
-
+  const { userPlants, setUserPlants, flagToast } = useContext(PlantContext);
+  const firstRender = useRef(true)
   const colourScheme = ["#c9d3ee", "#f7d4da", "#e9dbc2", "#caf4ed"];
 
   const plantsArr = Object.keys(userPlants);
-
+  useEffect(()=>{
+    if(!firstRender.current){
+      Toast.show(flagToast.toastInfo)
+    }
+    firstRender.current = false
+  },[flagToast])
   console.log(plantsArr);
   return (
     <SafeAreaView style={styles.container}>
@@ -44,6 +51,9 @@ function HomeScreen(props) {
       >
         <Text style={styles.buttonText}>+</Text>
       </TouchableOpacity>
+      <View>
+      <Text style={styles.nameText}>Hello, {getAuth().currentUser.displayName} 👋</Text>
+      </View>
       <Text style={styles.subText}>My Plants 🌱</Text>
       <Text style={styles.infoText}>You have {plantsArr.length} plants</Text>
       <ScrollView>
@@ -140,7 +150,7 @@ function HomeScreen(props) {
           ) : (
             <View style={{ width: 300, height: 300 }}>
               <Image
-                source={require("./assets/images/plant-gif.gif")}
+                source={require("./assets/images/3dplant.png")}
                 style={styles.imagePlant}
               />
             </View>
@@ -148,6 +158,7 @@ function HomeScreen(props) {
         </View>
       </ScrollView>
       <StatusBar style="auto" />
+      <Toast/>
     </SafeAreaView>
   );
 }
@@ -165,7 +176,8 @@ const styles = StyleSheet.create({
     color: "white",
   },
   subText: {
-    marginVertical: 30,
+    marginTop: 30,
+    marginBottom:10,
     fontSize: 30,
     color: "white",
     fontWeight: 500,
@@ -177,12 +189,11 @@ const styles = StyleSheet.create({
   },
   plantContainer: {
     width: "48%",
-    height: 250,
     borderRadius: 10,
     backgroundColor: "#f2f4e7",
     justifyContent: "center",
     alignItems: "center",
-    paddingVertical: 10,
+    paddingVertical: 5,
     gap: 10,
   },
   plantMainContainer: {
@@ -198,6 +209,7 @@ const styles = StyleSheet.create({
   plantTitle: {
     fontWeight: 600,
     fontSize: 15,
+    textAlign:'center',
   },
   addButton: {
     width: 60,
@@ -239,5 +251,15 @@ const styles = StyleSheet.create({
   imagePlant: {
     flex: 1,
     aspectRatio: 1,
+    transform:[{rotate:'30deg'}]
   },
+  welcomeText:{
+    fontSize:25,
+    color:'white',
+  },
+  nameText:{
+    color:'white',
+    fontSize:25,
+    marginTop:30,
+  }
 });
