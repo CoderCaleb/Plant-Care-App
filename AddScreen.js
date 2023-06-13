@@ -11,91 +11,160 @@ import {
   Button,
 } from "react-native";
 import React, { useState, useEffect, useContext, useRef } from "react";
-
-import { PlantContext } from "./App";
+import { update, getDatabase, ref, set } from "firebase/database";
+import { getAuth } from "firebase/auth";
+import { PlantContext } from "./LoggedIn";
 export default function AddScreen(props) {
   const { userPlants, setUserPlants } = useContext(PlantContext);
-  const [waterDays, setWaterDays] = useState({
-    M: false,
-    T: false,
-    W: false,
-    Th: false,
-    F: false,
-    Sa: false,
-    S: false,
-  });
+  const waterSchedule = props.route.params.water;
+  const screenType = props.route.params.type;
+  const [waterDays, setWaterDays] = useState(
+    screenType == "edit"
+      ? {
+          M: waterSchedule.M,
+          T: waterSchedule.T,
+          W: waterSchedule.W,
+          Th: waterSchedule.Th,
+          F: waterSchedule.F,
+          Sa: waterSchedule.Sa,
+          S: waterSchedule.S,
+        }
+      : {
+          M: false,
+          T: false,
+          W: false,
+          Th: false,
+          F: false,
+          Sa: false,
+          S: false,
+        }
+  );
+  console.log(waterDays);
   const [name, setName] = useState("");
-  const [light, setLight] = useState(0);
-  const [humidity, setHumidity] = useState(0);
-  const [temp, setTemp] = useState(0);
+  const [light, setLight] = useState(
+    screenType == "edit" ? props.route.params.light : 0
+  );
+  const [humidity, setHumidity] = useState(
+    screenType == "edit" ? props.route.params.humidity : 0
+  );
+  const [temp, setTemp] = useState(
+    screenType == "edit" ? props.route.params.temp : 0
+  );
   const [updatedPlantObj, setUpdatedPlantObj] = useState({});
   const [isClicked, setIsClicked] = useState(false);
-  const [nameError, setNameError] = useState('')
-  const [waterError, setWaterError] = useState('')
-  const [showErr,setShowErr] = useState(false)
+  const [nameError, setNameError] = useState("");
+  const [waterError, setWaterError] = useState("");
+  const [showErr, setShowErr] = useState(false);
   const days = Object.keys(waterDays);
   const firstUpdate = useRef(true);
   useEffect(() => {
     console.log("water days:", waterDays);
   }, [waterDays]);
   useEffect(() => {
-    console.log('Name: ',props.route.params.name)
-    props.route.params.name?setName(props.route.params.name):setName(props.route.params.altName);
+    console.log("Name: ", props.route.params.name);
+    props.route.params.name
+      ? setName(props.route.params.name)
+      : setName(props.route.params.altName);
   }, []);
   useEffect(() => {
+    const auth = getAuth();
+
     if (!firstUpdate.current) {
-      const tempObj = {
-        ["plant" + (Object.keys(userPlants).length + 1)]: {
+      if (screenType !== "edit") {
+        const tempObj = {
+          ["plant" + (Object.keys(userPlants).length + 1)]: {
+            name: name,
+            light: light,
+            temp: temp,
+            humidity: humidity,
+            schedule: waterDays,
+            image: "https://cdn-icons-png.flaticon.com/512/6284/6284623.png",
+          },
+        };
+        const userRef = ref(
+          getDatabase(),
+          `/users/${auth.currentUser.uid}/plants`
+        );
+        update(userRef, tempObj).then((value) => {
+          console.log("PLANT ADDED");
+        });
+        setUpdatedPlantObj(tempObj);
+      } else {
+        const tempObj = {
           name: name,
           light: light,
           temp: temp,
           humidity: humidity,
           schedule: waterDays,
           image: "https://cdn-icons-png.flaticon.com/512/6284/6284623.png",
-        },
-      };
-      setUpdatedPlantObj(tempObj);
+        };
+        const userRef = ref(
+          getDatabase(),
+          `/users/${auth.currentUser.uid}/plants/${props.route.params.plantKey}`
+        );
+        set(userRef, tempObj)
+          .then((value) => {
+            console.log("PLANT UPDATED");
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+        setUpdatedPlantObj(tempObj);
+      }
     }
+
     firstUpdate.current = false;
     console.log("firstUpdate", firstUpdate);
     console.log("Plants: ", userPlants);
   }, [isClicked]);
-  useEffect(()=>{
+  useEffect(() => {
     checkName();
     checkWater();
-    setShowErr(false)
-  },[name,waterDays])
-  useEffect(()=>{
-    console.log('Err:',nameError)
-  },[])
+    setShowErr(false);
+  }, [name, waterDays]);
   useEffect(() => {
-    setUserPlants((prev) => {
-      return { ...prev, ...updatedPlantObj };
-    });
-  }, [updatedPlantObj]);
-function checkName(){
-  if(name.trim()==''){
-    setNameError('Name cannot be empty')
-  }
-  else{
-    setNameError('none')
-  }
-}
-function checkWater(){
-  const keys = Object.keys(waterDays);
-  let isSet = false;
-  keys.map((value,index)=>{
-    if(!isSet){
-      if(waterDays[value]==true){
-        setWaterError('none')
-        isSet = true
-      }
-      else if(waterDays[value]==false){
-        setWaterError('Choose at least a day for watering')
+    console.log("Err:", nameError);
+    console.log("Key", props.route.params.plantKey);
+  }, []);
+  /*
+  useEffect(() => {
+    if(!firstUpdate.current){
+      if (screenType !== "edit") {
+        setUserPlants((prev) => {
+          return { ...prev, ...updatedPlantObj };
+        });
+      } else {
+        setUserPlants((prev) => {
+          const copyObj = { ...userPlants };
+          copyObj[props.route.params.plantKey] = updatedPlantObj;
+          console.log("Copy Obj:", copyObj);
+          return copyObj;
+        });
       }
     }
-  })
-}
+  }, [updatedPlantObj]);
+  */
+  function checkName() {
+    if (name.trim() == "") {
+      setNameError("Name cannot be empty");
+    } else {
+      setNameError("none");
+    }
+  }
+  function checkWater() {
+    const keys = Object.keys(waterDays);
+    let isSet = false;
+    keys.map((value, index) => {
+      if (!isSet) {
+        if (waterDays[value] == true) {
+          setWaterError("none");
+          isSet = true;
+        } else if (waterDays[value] == false) {
+          setWaterError("Choose at least a day for watering");
+        }
+      }
+    });
+  }
   const InputBox = (props) => {
     return (
       <View style={styles.inputNumContainer}>
@@ -134,7 +203,9 @@ function checkWater(){
     <View style={styles.container}>
       <View style={styles.innerContainer}>
         <ScrollView>
-          <Text style={styles.title}>Add New Plant</Text>
+          <Text style={styles.title}>
+            {screenType == "edit" ? "Edit Plant" : "Add New Plant"}
+          </Text>
           <View style={styles.lineBreak}></View>
           <View style={styles.inputContainer}>
             <Text style={styles.inputTitle}>Name</Text>
@@ -148,18 +219,31 @@ function checkWater(){
                 }}
                 value={name}
               />
-              <TouchableOpacity onPress={()=>{
-                if(props.route.params.name){
-                setName(props.route.params.name==name?props.route.params.altName:props.route.params.name)
-                }
-              }}>
+              <TouchableOpacity
+                onPress={() => {
+                  if (props.route.params.name) {
+                    setName(
+                      props.route.params.name == name
+                        ? props.route.params.altName
+                        : props.route.params.name
+                    );
+                  }
+                }}
+              >
                 <Image
                   source={require("./assets/images/swap.png")}
                   style={styles.swapIcon}
                 />
               </TouchableOpacity>
             </View>
-            <Text style={[styles.errorText,{display:showErr&&nameError!=='none'?'flex':'none'}]}>{nameError}</Text>
+            <Text
+              style={[
+                styles.errorText,
+                { display: showErr && nameError !== "none" ? "flex" : "none" },
+              ]}
+            >
+              {nameError}
+            </Text>
             <Text style={styles.inputTitle}>
               Light % - <Text style={styles.optionalText}>Optional</Text>
             </Text>
@@ -226,20 +310,30 @@ function checkWater(){
               </ScrollView>
             </View>
           </View>
-          <Text style={[styles.errorText,{display:showErr&&waterError!=='none'?'flex':'none'}]}>{waterError}</Text>
+          <Text
+            style={[
+              styles.errorText,
+              { display: showErr && waterError !== "none" ? "flex" : "none" },
+            ]}
+          >
+            {waterError}
+          </Text>
           <TouchableOpacity
             style={styles.addButton}
             onPress={() => {
-              if(nameError=='none'&&waterError=='none'){
-                const plantsUpdated = { ...userPlants };
+              if (nameError == "none" && waterError == "none") {
                 setIsClicked(!isClicked);
                 console.log(updatedPlantObj);
-                props.navigation.navigate("Home");
+                console.log("Edit Plant Clicked");
+                props.navigation.navigate("HomeScreen");
               }
-              setShowErr(true)
+
+              setShowErr(true);
             }}
           >
-            <Text style={styles.buttonText}>Add Plant</Text>
+            <Text style={styles.buttonText}>
+              {screenType == "edit" ? "Edit Plant" : "Add Plant"}
+            </Text>
           </TouchableOpacity>
         </ScrollView>
       </View>
@@ -387,7 +481,7 @@ const styles = StyleSheet.create({
     height: 35,
     marginRight: 15,
   },
-  errorText:{
-    color:'#b74a58'
-  }
+  errorText: {
+    color: "#b74a58",
+  },
 });

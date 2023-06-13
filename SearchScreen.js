@@ -8,7 +8,7 @@ const Stack = createStackNavigator();
 
 export default function AddPlantScreen(props) {
     return(
-    <Stack.Navigator>
+    <Stack.Navigator initialRouteName="SearchScreen">
         <Stack.Screen name='SearchScreen' component={SearchScreen}></Stack.Screen>
         <Stack.Screen name='AddScreen' component={AddScreen}></Stack.Screen>
     </Stack.Navigator>
@@ -172,5 +172,6 @@ const styles = StyleSheet.create({
     justifyContent:'space-between',
     alignItems:'center',
     marginTop:18,
-  }
+  },
+  
 });

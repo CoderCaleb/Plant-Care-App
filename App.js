@@ -8,82 +8,46 @@ import {
   TouchableOpacity,
 } from "react-native";
 import React, { useState, useEffect, createContext } from "react";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { NavigationContainer } from "@react-navigation/native";
+import { createStackNavigator } from "@react-navigation/stack";
+import { NavigationContainer, CommonActions } from "@react-navigation/native";
+import {set, ref, getDatabase, update} from 'firebase/database'
 import HomeScreen from "./HomeScreen";
 import PlantScreen from "./PlantScreen";
 import AddScreen from "./AddScreen";
 import SearchScreen from "./SearchScreen";
-const Tab = createBottomTabNavigator();
-export const PlantContext = createContext({});
-
+import LoggedIn from "./LoggedIn";
+import SignInScreen from "./SignInScreen";
+import SignUpScreen from "./SignUpScreen";
+import firebase from "firebase/compat/app";
+const Stack = createStackNavigator();
+const firebaseConfig = {
+  apiKey: "AIzaSyDP4NZ7s4sCmOzvoL2C5t25y67fTYXOEZQ",
+  authDomain: "plant-care-app-7883b.firebaseapp.com",
+  databaseURL: "https://plant-care-app-7883b-default-rtdb.firebaseio.com",
+  projectId: "plant-care-app-7883b",
+  storageBucket: "plant-care-app-7883b.appspot.com",
+  messagingSenderId: "947636991805",
+  appId: "1:947636991805:web:cefebb5eb6d6d665a23754"
+};
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+else{
+  console.log('no app found')
+}
 export default function App() {
-  const [userPlants, setUserPlants] = useState({});
+  const dbRef = ref(getDatabase(),'/')
+  useEffect(()=>{
+    
+  },[])
   return (
-    <PlantContext.Provider value={{ userPlants, setUserPlants }}>
-      <NavigationContainer>
-        <Tab.Navigator
-          screenOptions={{
-            tabBarShowLabel:false,
-            tabBarStyle: {
-              backgroundColor:'white',
-              height:70,
-              borderWidth:0
-            },
-          }}
-        >
-          <Tab.Screen
-            name="Home"
-            component={HomeScreen}
-            options={{
-              headerShown: false,
-              tabBarIcon: ({ focused }) => {
-                return (
-                  <View
-                    style={{ justifyContent: "center", alignItems: "center" }}
-                  >
-                    <Image
-                      source={require("./assets/images/home.png")}
-                      style={[
-                        styles.tabIcon,
-                        { tintColor: focused ? "#59c78b" : "#748c94" },
-                      ]}
-                    ></Image>
-                    <Text style={{ color: focused ? "#59c78b" : "#748c94" }}>
-                      Home
-                    </Text>
-                  </View>
-                );
-              },
-            }}
-          ></Tab.Screen>
-          <Tab.Screen
-            name="Add"
-            component={SearchScreen}
-            options={{
-              tabBarIcon: ({ focused }) => {
-                return (
-                  <View
-                    style={{ justifyContent: "center", alignItems: "center" }}
-                  >
-                    <Image
-                      source={require("./assets/images/add.png")}
-                      style={[
-                        styles.tabIcon,
-                        { tintColor: focused ? "#59c78b" : "#748c94" },
-                      ]}
-                    />
-                    <Text style={{ color: focused ? "#59c78b" : "#748c94" }}>
-                      Add
-                    </Text>
-                  </View>
-                );
-              },
-            }}
-          ></Tab.Screen>
-        </Tab.Navigator>
-      </NavigationContainer>
-    </PlantContext.Provider>
+    <NavigationContainer>
+      <Stack.Navigator>
+        <Stack.Screen name="SignIn" component={SignInScreen}></Stack.Screen>
+        <Stack.Screen name="SignUp" component={SignUpScreen}></Stack.Screen>
+        <Stack.Screen name="LoggedIn" component={LoggedIn} options={{headerShown:false}}></Stack.Screen>
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
 
