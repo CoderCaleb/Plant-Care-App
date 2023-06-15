@@ -12,6 +12,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { getDatabase, ref, set, get, onValue, update } from "firebase/database";
 import { getAuth } from "firebase/auth";
 import HomeScreen from "./HomeScreen";
+import CareScreen from "./CareScreen";
 import PlantScreen from "./PlantScreen";
 import AddScreen from "./AddScreen";
 import SearchScreen from "./SearchScreen";
@@ -19,20 +20,40 @@ const Tab = createBottomTabNavigator();
 export const PlantContext = createContext({});
 
 export default function LoggedIn() {
-  const [userPlants, setUserPlants] = useState({});
+  const [userPlants, setUserPlants] = useState(
+    {humidity: 10,
+    image: 'https://bs.plantnet.org/image/o/38d4346034e89f4e5917357f2bc62cdcd150a3af',
+    lastWatered: {
+      number: Date.now(),
+      day: new Date().getDay(),
+    },
+    light: 0,
+    name: 'Tarovine',
+    schedule: {
+      M: true,
+      T: false,
+      W:true,
+      Th:false,
+      F:false,
+      Sa:true,
+      S:false
+    },
+    temp: 5});
   const [flagToast, setFlagToast] = useState(false)
   useEffect(()=>{
     const auth = getAuth()
     onValue(ref(getDatabase(),`/users/${auth.currentUser.uid}/plants`),(snapshot)=>{
+
         if(snapshot.exists()){
             const data = snapshot.val()
             setUserPlants(data)
+            console.log('plant info fetched')
         }
         else{
           setUserPlants({})
+          console.log('plant info fetched FAILED')
         }
     })
-    
   },[])
   /*
   useEffect(()=>{
@@ -57,6 +78,7 @@ export default function LoggedIn() {
             },
           }}
         >
+
           <Tab.Screen
             name="Home"
             component={HomeScreen}
@@ -106,6 +128,7 @@ export default function LoggedIn() {
               },
             }}
           ></Tab.Screen>
+          
         </Tab.Navigator>
     </PlantContext.Provider>
   );

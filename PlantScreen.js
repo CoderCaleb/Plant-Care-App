@@ -168,7 +168,7 @@ text2: 'Failed to delete the plant. Please try again later. 🚫'
                       <View
                         style={[
                           styles.circle,
-                          { opacity: convertDay() == value ? "1" : "0" },
+                          { opacity: convertDay() == value ? 1 : 0 },
                         ]}
                       ></View>
                       <TouchableOpacity
@@ -193,11 +193,15 @@ text2: 'Failed to delete the plant. Please try again later. 🚫'
                           )}
                         </View>
                       </TouchableOpacity>
+                      
                     </View>
                   );
                 })}
               </View>
             </ScrollView>
+            <TouchableOpacity style={styles.wateredButton}>
+                <Text style={styles.buttonText}>Watered</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
@@ -320,4 +324,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     marginRight: 20,
   },
+  wateredButton:{
+    width:'100%',
+    height:40,
+    justifyContent:'center',
+    alignItems:'center',
+    backgroundColor:'#19a4ec',
+    borderRadius:10,
+    marginTop:10
+  },
+  buttonText:{
+    color:'white',
+    fontSize:16,
+    fontWeight:600
+  }
 });

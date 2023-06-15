@@ -112,6 +112,7 @@ const SearchScreen = (props) => {
                         props.navigation.navigate("AddScreen", {
                           name: value.common_name,
                           altName: value.scientific_name,
+                          image: value.image_url
                         })
                       }
                     >

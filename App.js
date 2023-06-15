@@ -19,6 +19,7 @@ import LoggedIn from "./LoggedIn";
 import SignInScreen from "./SignInScreen";
 import SignUpScreen from "./SignUpScreen";
 import firebase from "firebase/compat/app";
+import {auth} from 'firebase/app'
 const Stack = createStackNavigator();
 const firebaseConfig = {
   apiKey: "AIzaSyDP4NZ7s4sCmOzvoL2C5t25y67fTYXOEZQ",

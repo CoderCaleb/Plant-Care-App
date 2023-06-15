@@ -83,7 +83,7 @@ export default function AddScreen(props) {
   }
   useEffect(() => {
     const auth = getAuth();
-
+    const date = new Date
     if (!firstUpdate.current) {
       if (screenType !== "edit") {
         const tempObj = {
@@ -93,7 +93,8 @@ export default function AddScreen(props) {
             temp: temp,
             humidity: humidity,
             schedule: waterDays,
-            image: "https://cdn-icons-png.flaticon.com/512/6284/6284623.png",
+            image: props.route.params.image,
+            lastWatered: {number:Date.now(),day:date.getDay()}
           },
         };
         const userRef = ref(
@@ -123,13 +124,12 @@ export default function AddScreen(props) {
           temp: temp,
           humidity: humidity,
           schedule: waterDays,
-          image: "https://cdn-icons-png.flaticon.com/512/6284/6284623.png",
         };
         const userRef = ref(
           getDatabase(),
           `/users/${auth.currentUser.uid}/plants/${props.route.params.plantKey}`
         );
-        set(userRef, tempObj)
+        update(userRef, tempObj)
           .then((value) => {
             console.log("PLANT UPDATED");
             setFlagToast({toastInfo:{
@@ -345,7 +345,7 @@ text2: 'Failed to update plant information. Please try again later. 🚫'
                 setIsClicked(!isClicked);
                 console.log(updatedPlantObj);
                 console.log("Edit Plant Clicked");
-                props.navigation.navigate("HomeScreen");
+                props.navigation.navigate("Home",{screen:'HomeScreen'});
               }
 
               setShowErr(true);
