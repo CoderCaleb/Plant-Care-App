@@ -38,8 +38,10 @@ export default function LoggedIn() {
       Sa:true,
       S:false
     },
-    temp: 5});
+    temp: 5,
+  lastWaterDate:new Date().getDay()});
   const [flagToast, setFlagToast] = useState(false)
+  const [isWatered, setIsWatered] = useState(false)
   useEffect(()=>{
     const auth = getAuth()
     onValue(ref(getDatabase(),`/users/${auth.currentUser.uid}/plants`),(snapshot)=>{
@@ -73,7 +75,6 @@ export default function LoggedIn() {
             headerShown:false,
             tabBarStyle: {
               backgroundColor:'white',
-              height:70,
               borderWidth:0
             },
           }}

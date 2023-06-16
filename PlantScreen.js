@@ -7,15 +7,17 @@ import {
   ScrollView,
 } from "react-native";
 import React, { useState, useEffect, useContext } from "react";
-import { remove, ref, getDatabase } from "firebase/database";
+import { remove, ref, getDatabase,update } from "firebase/database";
 import { getAuth } from "firebase/auth";
 import { PlantContext } from "./LoggedIn";
 //#f5d4d7, #c5ceed
 export default function PlantScreen({ navigation, route }) {
   const { setFlagToast, flagToast } = useContext(PlantContext);
+  const [paramUpdated, setParamUpdated] = useState(false);
   const days = ["M", "T", "W", "Th", "F", "Sa", "S"];
   const today = new Date();
   const dayOfWeek = today.getDay();
+  const auth = getAuth()
   function convertDay() {
     if (dayOfWeek == 0) {
       return "S";
@@ -24,7 +26,7 @@ export default function PlantScreen({ navigation, route }) {
     }
   }
   useEffect(() => {
-    console.log("day: ", dayOfWeek);
+    console.log('isWatered:',route.params.isWatered)
   }, []);
   function checkNumber(number, symbol) {
     if (number == 0) {
@@ -84,12 +86,13 @@ export default function PlantScreen({ navigation, route }) {
                     console.log(err);
                     setFlagToast({
                       toastInfo: {
-                        type: 'error',
-text1: 'Deletion failed',
-text2: 'Failed to delete the plant. Please try again later. 🚫'
+                        type: "error",
+                        text1: "Deletion failed",
+                        text2:
+                          "Failed to delete the plant. Please try again later. 🚫",
                       },
                       flag: !flagToast,
-                    })
+                    });
                   });
               }}
             >
@@ -193,14 +196,55 @@ text2: 'Failed to delete the plant. Please try again later. 🚫'
                           )}
                         </View>
                       </TouchableOpacity>
-                      
                     </View>
                   );
                 })}
               </View>
             </ScrollView>
-            <TouchableOpacity style={styles.wateredButton}>
-                <Text style={styles.buttonText}>Watered</Text>
+            <TouchableOpacity
+              style={styles.wateredButton}
+              onPress={() => {
+                const userRef = ref(
+                  getDatabase(),
+                  `/users/${auth.currentUser.uid}/plants/${route.params.plantKey}`
+                );
+                const date = new Date()
+                console.log("🚀 ~ file: PlantScreen.js:219 ~ PlantScreen ~ route.params.userPlants[route.params.plantKey].lastWateredSnapshot.day:", route.params.userPlants[route.params.plantKey].lastWateredSnapshot.day)
+
+                if (route.params.isWatered&&(paramUpdated||!paramUpdated)) {
+                  update(userRef, {
+                    lastWatered: {
+                      day: route.params.userPlants[route.params.plantKey].lastWateredSnapshot.day,
+                      number:
+                        route.params.userPlants[route.params.plantKey].lastWateredSnapshot.number,
+                    },
+                    watered:false
+                  })
+                  .then((value)=>{
+                    console.log('UNDO SUCCESS')
+                    navigation.setParams({ isWatered:false });
+                    setParamUpdated(!paramUpdated)
+                  })
+                  .catch(err=>console.log(err));
+                } else {
+                  update(userRef, {
+                    lastWatered: {
+                      day: date.getDay(),
+                      number: Date.now(),
+                    },
+                    watered:true
+                  })
+                  .then((value)=>{
+                    navigation.setParams({ isWatered:true });
+                    setParamUpdated(!paramUpdated)
+
+                  });
+                }
+              }}
+            >
+              <Text style={styles.buttonText}>
+                {route.params.isWatered&&(paramUpdated||!paramUpdated) ? "Undo" : "Water"}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -324,18 +368,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     marginRight: 20,
   },
-  wateredButton:{
-    width:'100%',
-    height:40,
-    justifyContent:'center',
-    alignItems:'center',
-    backgroundColor:'#19a4ec',
-    borderRadius:10,
-    marginTop:10
+  wateredButton: {
+    width: "100%",
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#19a4ec",
+    borderRadius: 10,
+    marginTop: 10,
   },
-  buttonText:{
-    color:'white',
-    fontSize:16,
-    fontWeight:600
-  }
+  buttonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: 600,
+  },
 });

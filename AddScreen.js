@@ -94,7 +94,10 @@ export default function AddScreen(props) {
             humidity: humidity,
             schedule: waterDays,
             image: props.route.params.image,
-            lastWatered: {number:Date.now(),day:date.getDay()}
+            lastWatered: {number:Date.now(),day:date.getDay()},
+            lastWateredSnapshot: {number:Date.now(),day:date.getDay()},
+            watered:true,
+            lastWaterDate:new Date().getDay()
           },
         };
         const userRef = ref(

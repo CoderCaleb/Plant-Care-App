@@ -34,6 +34,8 @@ function HomeScreen(props) {
   const [screen, setScreen] = useState("care");
   const [DATA, setDATA] = useState([userPlants]);
   const [allWatered, setAllWatered] = useState(false)
+  const [nextWaterDays,setNextWaterDays] = useState(0)
+  const [lastWateredDays,setLastWateredDays] = useState(0)
   const firstRender = useRef(true);
   const colourScheme = ["#c9d3ee", "#f7d4da", "#e9dbc2", "#caf4ed"];
   const auth = getAuth()
@@ -50,21 +52,34 @@ function HomeScreen(props) {
     setDATA(newArr);
   }, [userPlants]);
   function lastWatered(lastWatered) {
-    return Math.floor((Date.now() - lastWatered) / 86400000);
+    const days = Math.floor((Date.now() - lastWatered) / 86400000)
+    setLastWateredDays(days)
+    return days;
   }
-
-  function nextWater(lastWatered, schedule) {
+function updateWateringStatus(key){
+  const userRef = ref(
+    getDatabase(),
+    `/users/${auth.currentUser.uid}/plants/${key}`
+  );
+  update(userRef,{
+    watered:false,
+    //updated:true,
+    lastWaterDate:new Date().getDay()
+  })
+}
+  function nextWater(lastWatered, schedule,key) {
     let dayFound = false;
     const days = Object.keys(schedule);
+    const date = new Date()
     let lastWateredDay;
     days.sort((a, b) => {
       const order = ["M", "T", "W", "Th", "F", "Sa", "S"];
       return order.indexOf(a) - order.indexOf(b);
     });
-    if (lastWatered == 0) {
+    if (date.getDay() == 0) {
       lastWateredDay = "S";
     } else {
-      lastWateredDay = days[lastWatered - 1];
+      lastWateredDay = days[date.getDay() - 1];
     }
 
     const newArray = days.slice(days.indexOf(lastWateredDay));
@@ -77,6 +92,12 @@ function HomeScreen(props) {
         if (schedule[i]) {
           dayFound = true;
           console.log("Day:", days);
+          if(daysToWater==0&&userPlants[key].lastWaterDate!==new Date().getDay()){
+            updateWateringStatus(key)
+          }
+          console.log("🚀 ~ file: HomeScreen.js:96 ~ nextWater ~ userPlants[key]:", userPlants[key])
+
+          setNextWaterDays(daysToWater)
           return daysToWater;
         } else {
           daysToWater++;
@@ -88,6 +109,11 @@ function HomeScreen(props) {
         if (schedule[i]) {
           dayFound = true;
           console.log("Day:", days);
+          if(daysToWater==0){
+            updateWateringStatus(key)
+          }
+          setNextWaterDays(daysToWater)
+
           return daysToWater;
         } else {
           daysToWater++;
@@ -103,6 +129,7 @@ function HomeScreen(props) {
 
     
   }, [DATA]);
+
   useEffect(()=>{
     console.log('All watered:',allWatered)
   },[allWatered])
@@ -183,10 +210,12 @@ function HomeScreen(props) {
                       item.userPlants.lastWatered && item.userPlants.schedule
                         ? nextWater(
                             item.userPlants.lastWatered.day,
-                            item.userPlants.schedule
+                            item.userPlants.schedule,
+                            item.plantKey
                           )
                         : null
                     }
+                    watered={item.userPlants.watered}
                     plantKey={item.plantKey}
                   />
                 )}
@@ -228,10 +257,12 @@ function HomeScreen(props) {
                       item.userPlants.lastWatered && item.userPlants.schedule
                         ? nextWater(
                             item.userPlants.lastWatered.day,
-                            item.userPlants.schedule
+                            item.userPlants.schedule,
+                            item.plantKey
                           )
                         : null
                     }
+                    watered={item.userPlants.watered}
                     plantKey={item.plantKey}
                   />
                 ) : null
@@ -268,6 +299,7 @@ function HomeScreen(props) {
             humidity: props.value["humidity"],
             water: props.value["schedule"],
             plantKey: props.plantKey,
+            isWatered:props.watered
           });
         }}
       >
@@ -332,7 +364,12 @@ function HomeScreen(props) {
             humidity: props.value["humidity"],
             water: props.value["schedule"],
             plantKey: props.plantKey,
+            isWatered:props.watered,
+            userPlants:userPlants
           });
+          console.log('last watered:',lastWateredDays)
+          console.log('next water:',nextWaterDays)
+
         }}
       >
         <View style={styles.listContainer}>
@@ -351,14 +388,14 @@ function HomeScreen(props) {
               <View
                 style={[
                   styles.iconContainer,
-                  props.nextWater == 0&&props.lastWatered>0
-                    ? { backgroundColor: "#feece9", borderColor: "#cfdeec" }
+                  !props.watered
+                    ? { backgroundColor: "#feece9", borderColor: "#c55555" }
                     : null,
                 ]}
               >
                 <Image
                   source={
-                    props.nextWater == 0&&props.lastWatered>0
+                    !props.watered
                       ? require("./assets/images/drop-red.png")
                       : require("./assets/images/drop-green.png")
                   }
@@ -368,10 +405,10 @@ function HomeScreen(props) {
               <Text
                 style={[
                   styles.greenText, //props.nextWater == 0&&props.lastWatered>0 = today is watering day and last watered not today
-                  { color: props.nextWater == 0&&props.lastWatered>0 ? "#ffecea" : "#59c78b" },
+                  { color: !props.watered ? "#ffecea" : "#59c78b" },
                 ]}
               >
-                {props.nextWater == 0
+                {props.nextWater == 0 || !props.watered
                   ? "Water today"
                   : `water in ${props.nextWater} days`}
               </Text>
