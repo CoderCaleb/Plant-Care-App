@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ScrollView,
   FlatList,
+  ImageBackground,
 } from "react-native";
 import React, { useEffect, useState, useContext, useRef } from "react";
 import { PlantContext } from "./LoggedIn";
@@ -92,9 +93,12 @@ function updateWateringStatus(key){
         if (schedule[i]) {
           dayFound = true;
           console.log("Day:", days);
-          if(daysToWater==0&&userPlants[key].lastWaterDate!==new Date().getDay()){
-            updateWateringStatus(key)
+          if(key){
+            if(daysToWater==0&&userPlants[key].lastWaterDate!==new Date().getDay()){
+              updateWateringStatus(key)
+            }
           }
+          
           console.log("🚀 ~ file: HomeScreen.js:96 ~ nextWater ~ userPlants[key]:", userPlants[key])
 
           setNextWaterDays(daysToWater)
@@ -122,12 +126,10 @@ function updateWateringStatus(key){
     }
   }
   useEffect(() => {
-
-      const watered = DATA.every(item => item.lastWatered !== 0);
-      console.log('watered',watered)
+      const watered = DATA.every(item => {return item.userPlants.watered==true});
+      console.log('DATA',DATA)
+      console.log("🚀 ~ file: HomeScreen.js:132 ~ useEffect ~ watered:", watered)
       setAllWatered(watered);
-
-    
   }, [DATA]);
 
   useEffect(()=>{
@@ -142,11 +144,14 @@ function updateWateringStatus(key){
       >
         <Text style={styles.buttonText}>+</Text>
       </TouchableOpacity>
-      <View>
-        <Text style={styles.nameText}>
-          <Text style={styles.helloText}>Hello</Text>,{" "}
-          {getAuth().currentUser.displayName} 👋
-        </Text>
+      <View style={styles.introContainer}>
+        <ImageBackground source={require('./assets/images/final-monstera-bg.png')} style={styles.introBgImage}>
+          <Text style={styles.nameText}>
+           Welcome,{" "}
+            {getAuth().currentUser.displayName} 👋
+          </Text>
+          <Text style={styles.whiteText}>How are your plants doing today</Text>
+        </ImageBackground>
       </View>
       <View style={styles.navigatorContainer}>
         <TouchableOpacity
@@ -188,9 +193,8 @@ function updateWateringStatus(key){
       </View>
       {screen == "plants" ? (
         <>
-          <Text style={styles.subText}>My Plants 🌱</Text>
           <Text style={styles.infoText}>
-            You have {plantsArr.length} plants
+            You have <Text style={{fontWeight:600}}>{plantsArr.length}</Text> plants 🪴
           </Text>
           <View style={styles.plantMainContainer}>
             {plantsArr.length !== 0 ? (
@@ -207,6 +211,7 @@ function updateWateringStatus(key){
                         : null
                     }
                     nextWater={
+            
                       item.userPlants.lastWatered && item.userPlants.schedule
                         ? nextWater(
                             item.userPlants.lastWatered.day,
@@ -219,6 +224,7 @@ function updateWateringStatus(key){
                     plantKey={item.plantKey}
                   />
                 )}
+                keyExtractor={item=>item.id}  
               />
             ) : (
               <View style={{ width: 300, height: 300 }}>
@@ -237,7 +243,7 @@ function updateWateringStatus(key){
             {allWatered?<View style={{ width: 300, height: 300 }}>
               <Text style={styles.infoText}>You watered all your plants today 👍</Text>
               <Image style={styles.imagePlant} source={require('./assets/images/3dplant.png')}/>
-            </View>:null}
+            </View>:<Text>NOT WATERED</Text>}
 
             <FlatList
               data={DATA}
@@ -278,10 +284,11 @@ function updateWateringStatus(key){
   function PlantWaterBox(props) {
     useEffect(() => {
       console.log("day:", props.nextWater);
+      console.log("watered:", props.watered);
     }, []);
     return (
       <>
-      {props.lastWatered!==0&&props.nextWater==0?
+      {!props.watered?
       <TouchableOpacity
         style={[
           styles.plantContainer,
@@ -318,23 +325,38 @@ function updateWateringStatus(key){
           </View>
 
           <TouchableOpacity style={styles.wateredButton} onPress={()=>{
+
+          
             const date = new Date()
             const userRef = ref(
               getDatabase(),
               `/users/${auth.currentUser.uid}/plants/${props.plantKey}`
             );
-            update(userRef,{
-              lastWatered:{
-                day:date.getDay(),
-                number: Date.now()
-              }
-            })
-            .then((value)=>{
-              console.log('PLANT WATERED')
-            })
-            .catch((err)=>{
-              console.log(err)
-            })
+            if (props.watered) {
+              update(userRef, {
+                lastWatered: {
+                  day: props.value[props.plantKey].lastWateredSnapshot.day,
+                  number:
+                  props.value[props.plantKey].lastWateredSnapshot.number,
+                },
+                watered:false
+              })
+              .then((value)=>{
+                console.log('UNDO SUCCESS')
+              })
+              .catch(err=>console.log(err));
+            } else {
+              update(userRef, {
+                lastWatered: {
+                  day: date.getDay(),
+                  number: Date.now(),
+                },
+                watered:true
+              })
+              .then((value)=>{
+                console.log('WATERING SUCCESS')
+              });
+            }
           }}>
             <Image source={require('./assets/images/grey-drop.png')} style={styles.buttonIcon}/>
           </TouchableOpacity>
@@ -442,7 +464,7 @@ const styles = StyleSheet.create({
   infoText: {
     fontSize: 18,
     color: "white",
-    marginBottom: 10,
+    marginVertical: 15,
   },
   plantContainer: {
     width: "100%",
@@ -461,6 +483,7 @@ const styles = StyleSheet.create({
   plantMainContainer: {
     gap: 5,
     justifyContent: "center",
+    flex:1
   },
   plantImage: {
     height: '90%',
@@ -539,7 +562,7 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 25,
     marginTop: 30,
-    marginBottom: 30,
+    fontWeight:600,
   },
   helloText: {},
   navigatorContainer: {
@@ -579,5 +602,20 @@ const styles = StyleSheet.create({
   buttonIcon:{
     width:'50%',
     height:"50%"
+  },
+  introContainer:{
+    height:'24%',
+    width:'110%',
+    alignSelf:'center'
+  },
+  introBgImage:{
+    flex:1,
+    justifyContent:'center',
+    alignItems:'center'
+  },
+  whiteText:{
+    color:'white',
+    fontSize:17,
+    marginTop:10,
   }
 });

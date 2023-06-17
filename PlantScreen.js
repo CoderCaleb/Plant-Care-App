@@ -40,7 +40,7 @@ export default function PlantScreen({ navigation, route }) {
     <View style={styles.container}>
       <ScrollView>
         <View style={styles.titleContainer}>
-          <Text style={styles.titleText}>{route.params.name}</Text>
+          <Text style={styles.titleText} maxL>{route.params.name.slice(0,17)+(route.params.name.length>17?'...':'')}</Text>
           <View style={styles.iconContainer}>
             <TouchableOpacity
               onPress={() => {

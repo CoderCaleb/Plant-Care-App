@@ -123,10 +123,16 @@ const SearchScreen = (props) => {
               );
             })
           ) : (
-            <Text style={styles.titleText}>No Plants found</Text>
+            <View style={{justifyContent:'center',alignItems:'center'}}>
+            <Text style={styles.titleText}>No plants found</Text>
+            <Image source={require('./assets/images/search-3d-icon.png')} style={{width:350,height:350}}/>
+          </View>
           )
         ) : (
-          <Text style={styles.titleText}>Search something</Text>
+          <View style={{justifyContent:'center',alignItems:'center'}}>
+            <Text style={styles.titleText}>Search a plant species</Text>
+            <Image source={require('./assets/images/search-3d-icon.png')} style={{width:350,height:350}}/>
+          </View>
         )}
       </ScrollView>
     </View>

@@ -43,6 +43,10 @@ export default function SignInScreen({navigation, route}) {
         .then((creds)=>{
             const user = creds.user
             navigation.navigate('LoggedIn')
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'LoggedIn' }],
+            });
         })
         .catch(err=>{
             console.log(err)

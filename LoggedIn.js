@@ -75,7 +75,8 @@ export default function LoggedIn() {
             headerShown:false,
             tabBarStyle: {
               backgroundColor:'white',
-              borderWidth:0
+              borderWidth:0,
+              height:60,
             },
           }}
         >
