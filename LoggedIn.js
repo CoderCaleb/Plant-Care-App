@@ -20,26 +20,7 @@ const Tab = createBottomTabNavigator();
 export const PlantContext = createContext({});
 
 export default function LoggedIn() {
-  const [userPlants, setUserPlants] = useState(
-    {humidity: 10,
-    image: 'https://bs.plantnet.org/image/o/38d4346034e89f4e5917357f2bc62cdcd150a3af',
-    lastWatered: {
-      number: Date.now(),
-      day: new Date().getDay(),
-    },
-    light: 0,
-    name: 'Tarovine',
-    schedule: {
-      M: true,
-      T: false,
-      W:true,
-      Th:false,
-      F:false,
-      Sa:true,
-      S:false
-    },
-    temp: 5,
-  lastWaterDate:new Date().getDay()});
+  const [userPlants, setUserPlants] = useState({});
   const [flagToast, setFlagToast] = useState(false)
   const [isWatered, setIsWatered] = useState(false)
   useEffect(()=>{

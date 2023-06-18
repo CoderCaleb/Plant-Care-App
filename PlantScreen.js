@@ -6,18 +6,20 @@ import {
   StyleSheet,
   ScrollView,
 } from "react-native";
-import React, { useState, useEffect, useContext } from "react";
-import { remove, ref, getDatabase,update } from "firebase/database";
+import React, { useState, useEffect, useContext, useRef } from "react";
+import { remove, ref, getDatabase, update } from "firebase/database";
 import { getAuth } from "firebase/auth";
 import { PlantContext } from "./LoggedIn";
+import { Toast } from "react-native-toast-message/lib/src/Toast";
 //#f5d4d7, #c5ceed
 export default function PlantScreen({ navigation, route }) {
   const { setFlagToast, flagToast } = useContext(PlantContext);
   const [paramUpdated, setParamUpdated] = useState(false);
+  const firstRender = useRef(true);
   const days = ["M", "T", "W", "Th", "F", "Sa", "S"];
   const today = new Date();
   const dayOfWeek = today.getDay();
-  const auth = getAuth()
+  const auth = getAuth();
   function convertDay() {
     if (dayOfWeek == 0) {
       return "S";
@@ -26,7 +28,7 @@ export default function PlantScreen({ navigation, route }) {
     }
   }
   useEffect(() => {
-    console.log('isWatered:',route.params.isWatered)
+    console.log("isWatered:", route.params.isWatered);
   }, []);
   function checkNumber(number, symbol) {
     if (number == 0) {
@@ -35,12 +37,20 @@ export default function PlantScreen({ navigation, route }) {
       return number + symbol;
     }
   }
-
+  useEffect(() => {
+    if (!firstRender.current) {
+      Toast.show(flagToast.toastInfo);
+    }
+    firstRender.current = false;
+  }, [flagToast]);
   return (
     <View style={styles.container}>
       <ScrollView>
         <View style={styles.titleContainer}>
-          <Text style={styles.titleText} maxL>{route.params.name.slice(0,17)+(route.params.name.length>17?'...':'')}</Text>
+          <Text style={styles.titleText} maxL>
+            {route.params.name.slice(0, 17) +
+              (route.params.name.length > 17 ? "..." : "")}
+          </Text>
           <View style={styles.iconContainer}>
             <TouchableOpacity
               onPress={() => {
@@ -208,47 +218,74 @@ export default function PlantScreen({ navigation, route }) {
                   getDatabase(),
                   `/users/${auth.currentUser.uid}/plants/${route.params.plantKey}`
                 );
-                const date = new Date()
-                console.log("🚀 ~ file: PlantScreen.js:219 ~ PlantScreen ~ route.params.userPlants[route.params.plantKey].lastWateredSnapshot.day:", route.params.userPlants[route.params.plantKey].lastWateredSnapshot.day)
+                const date = new Date();
+                console.log(
+                  "🚀 ~ file: PlantScreen.js:219 ~ PlantScreen ~ route.params.userPlants[route.params.plantKey].lastWateredSnapshot.day:",
+                  route.params.userPlants[route.params.plantKey]
+                    .lastWateredSnapshot.day
+                );
 
-                if (route.params.isWatered&&(paramUpdated||!paramUpdated)) {
+                if (route.params.isWatered && (paramUpdated || !paramUpdated)) {
+                  const days = 5;
+                  const millisecondsIn5Days = 24 * 60 * 60 * 1000 * 5;
                   update(userRef, {
                     lastWatered: {
-                      day: route.params.userPlants[route.params.plantKey].lastWateredSnapshot.day,
+                      day:
+                        route.params.userPlants[route.params.plantKey]
+                          .lastWatered.day - 5,
                       number:
-                        route.params.userPlants[route.params.plantKey].lastWateredSnapshot.number,
+                        route.params.userPlants[route.params.plantKey]
+                          .lastWatered.number - millisecondsIn5Days,
                     },
-                    watered:false
+                    watered: false,
                   })
-                  .then((value)=>{
-                    console.log('UNDO SUCCESS')
-                    navigation.setParams({ isWatered:false });
-                    setParamUpdated(!paramUpdated)
-                  })
-                  .catch(err=>console.log(err));
+                    .then((value) => {
+                      console.log("UNDO SUCCESS");
+                      navigation.setParams({ isWatered: false });
+                      setParamUpdated(!paramUpdated);
+                      setFlagToast({
+                        toastInfo: {
+                          type: "info",
+                          text1: "Undo Watering",
+                          text2: "Watering undone! 💦🌿",
+                        },
+                        flag: !flagToast,
+                      });
+                    })
+                    .catch((err) => console.log(err));
                 } else {
                   update(userRef, {
                     lastWatered: {
                       day: date.getDay(),
                       number: Date.now(),
                     },
-                    watered:true
-                  })
-                  .then((value)=>{
-                    navigation.setParams({ isWatered:true });
-                    setParamUpdated(!paramUpdated)
+                    watered: true,
+                  }).then((value) => {
+                    navigation.setParams({ isWatered: true });
+                    setParamUpdated(!paramUpdated);
 
+                    setFlagToast({
+                      toastInfo: {
+                        type: "success",
+                        text1: "Watering Success",
+                        text2: "Your plant has been watered! 🌿💧",
+                      },
+                      flag: !flagToast,
+                    });
                   });
                 }
               }}
             >
               <Text style={styles.buttonText}>
-                {route.params.isWatered&&(paramUpdated||!paramUpdated) ? "Undo" : "Water"}
+                {route.params.isWatered && (paramUpdated || !paramUpdated)
+                  ? "Undo"
+                  : "Water"}
               </Text>
             </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
+      <Toast />
     </View>
   );
 }

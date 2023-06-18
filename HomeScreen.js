@@ -42,7 +42,9 @@ function HomeScreen(props) {
   const auth = getAuth()
   const plantsArr = Object.keys(userPlants);
   useEffect(() => {
+    console.log('USER PLANTS',userPlants)
     const newArr = plantsArr.map((value, index) => {
+      console.log(value)
       return {
         id: index,
         userPlants: userPlants[value],
@@ -52,6 +54,14 @@ function HomeScreen(props) {
     console.log("newArr:", newArr);
     setDATA(newArr);
   }, [userPlants]);
+  useEffect(()=>{
+    if(!firstRender.current){
+      Toast.show(
+        flagToast.toastInfo,
+      )
+    }
+    firstRender.current=false
+  },[flagToast])
   function lastWatered(lastWatered) {
     const days = Math.floor((Date.now() - lastWatered) / 86400000)
     setLastWateredDays(days)
@@ -99,7 +109,6 @@ function updateWateringStatus(key){
             }
           }
           
-          console.log("🚀 ~ file: HomeScreen.js:96 ~ nextWater ~ userPlants[key]:", userPlants[key])
 
           setNextWaterDays(daysToWater)
           return daysToWater;
@@ -126,10 +135,14 @@ function updateWateringStatus(key){
     }
   }
   useEffect(() => {
+    console.log('DATA',DATA)
+    DATA.forEach((value,index)=>{
+      console.log("🚀 ~ file: HomeScreen.js:132 ~ useEffect ~ value:", value.watered)
+    })
+    if(Object.keys(userPlants).length!==0){
       const watered = DATA.every(item => {return item.userPlants.watered==true});
-      console.log('DATA',DATA)
-      console.log("🚀 ~ file: HomeScreen.js:132 ~ useEffect ~ watered:", watered)
       setAllWatered(watered);
+    }
   }, [DATA]);
 
   useEffect(()=>{
@@ -358,7 +371,7 @@ function updateWateringStatus(key){
               });
             }
           }}>
-            <Image source={require('./assets/images/grey-drop.png')} style={styles.buttonIcon}/>
+            <Image source={require('./assets/images/blue-drop.png')} style={styles.buttonIcon}/>
           </TouchableOpacity>
           </View>
       </TouchableOpacity>:null
@@ -595,7 +608,7 @@ const styles = StyleSheet.create({
     alignItems:'center',
     height:35,
     width:35,
-    borderColor:'#646464',
+    borderColor:'#83dbff',
     borderWidth:2,
     borderRadius:12,
   },
