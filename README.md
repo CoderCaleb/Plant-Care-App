@@ -1,18 +1,15 @@
-# 🌱 Plant Care App
+# 🌿 Plant Care App
 
-A mobile app built with React Native that helps users care for their plants with ease. Users can search for real plants via the Trefle API or add custom ones, track humidity and watering schedules, and receive care reminders.
+A mobile app to help users track and manage the care of their plants. Users can search a global plant database via the Trefle API, or add custom plants to their garden. Features include watering schedules, humidity settings, and automated care reminders.
 
----
+## 🔧 Features
 
-## ✨ Features
+- 🌱 Search for plants via the Trefle API  
+- ➕ Add custom plants if not found in database  
+- 🧠 View detailed plant care information (light, water, humidity)  
+- ⏰ Receive reminders for watering schedules  
+- 🌿 Manage a personalized virtual garden
 
-- 🔍 Search plants using the Trefle API  
-- 🌿 Add plants to your personal garden  
-- 💧 Set watering schedules & humidity levels  
-- 🔔 Get care reminders with push notifications  
+## 📸 Screenshot
 
----
-
-## 📸 Screenshots
-
-![Screenshot]([https://your-image-link.com/screenshot.png](https://imgur.com/a/lQYd9Hh))
+![Screenshot](https://i.imgur.com/6dQhqBK.png)
