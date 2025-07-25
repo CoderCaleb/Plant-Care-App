@@ -10,6 +10,4 @@ A mobile app to help users track and manage the care of their plants. Users can 
 - ⏰ Receive reminders for watering schedules  
 - 🌿 Manage a personalized virtual garden
 
-## 📸 Screenshot
-
-![Screenshot](https://i.imgur.com/6dQhqBK.png)
+![Screenshot](https://imgur.com/a/lQYd9Hh)
